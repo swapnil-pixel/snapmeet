@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SnapMeet | Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Basic styles for dropdowns in navbar */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 220px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 10;
+            padding: 10px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content p,
+        .dropdown-content li {
+            margin: 8px 0;
+        }
+
+        .dropdown-content form {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+            <!-- Navbar -->
+        <div class="navbar">
+            <div class="logo">SnapMeet</div>
+            <form class="search-bar" method="GET" action="/search">
+                <input type="text" name="query" placeholder="Search users...">
+                <button type="submit">Search</button>
+            </form>
+            <a href="{{ url_for('view_friend_requests') }}" class="nav-link">Friend Requests</a>
+            <a href="{{ url_for('view_suggested_users') }}" class="nav-link">Suggested Users</a>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+    </div>
+
+    <!-- Dashboard Layout -->
+    <div class="dashboard-container">
+        <!-- Left Sidebar -->
+            <div class="left-sidebar">
+                <h3>{{ user.username }}</h3>
+                <p>{{ user.email }}</p>
+
+                <hr>
+                <h4>Your Friends</h4>
+                {% if friends %}
+                    <ul>
+                        {% for friend in friends %}
+                            <li>
+                                <a href="{{ url_for('view_user_profile', user_id=friend.id) }}">{{ friend.username }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No friends yet.</p>
+                {% endif %}
+            </div>
+
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h2>Welcome to SnapMeet 🎉</h2>
+            <p>This is your feed — upcoming: snaps, requests & more!</p>
+
+            <!-- Post Form -->
+            <div class="post-form">
+                <h3>Create a Post</h3>
+                <form action="/post" method="POST" enctype="multipart/form-data">
+                    <textarea name="content" placeholder="What's on your mind?" rows="4" cols="50" required></textarea><br>
+                    <input type="file" name="image"><br><br>
+                    <input type="submit" value="Post">
+                </form>
+            </div>
+
+            <!-- Posts Feed -->
+            <hr>
+            <h3>Recent Posts</h3>
+            {% for post in posts %}
+                <div class="post">
+                    <p><strong>{{ post.username }}</strong> ({{ post.created_at }}):</p>
+                    <p>{{ post.content }}</p>
+                    {% if post.image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + post.image_filename) }}" width="300"><br>
+                    {% endif %}
+                    <hr>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

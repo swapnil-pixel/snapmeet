@@ -1,0 +1,25 @@
+<!-- templates/suggested_users.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suggested Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+        <h2>Suggested Users</h2>
+    </div>
+
+    <div class="content">
+        {% for u in suggested_users %}
+            <div class="user">
+                <p>{{ u.username }}</p>
+                <form method="POST" action="/send_request/{{ u.id }}">
+                    <button type="submit">Send Request</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

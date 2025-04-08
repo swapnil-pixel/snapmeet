@@ -1,0 +1,29 @@
+<!-- templates/friend_requests.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Friend Requests</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+        <h2>Friend Requests</h2>
+    </div>
+
+    <div class="content">
+        {% if friend_requests %}
+            {% for req in friend_requests %}
+                <div class="request">
+                    <p>{{ req.username }}</p>
+                    <form method="POST" action="/accept_request/{{ req.id }}">
+                        <input type="submit" value="Accept">
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No new requests.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

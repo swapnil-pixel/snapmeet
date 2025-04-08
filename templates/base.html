@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SnapMeet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a class="logo" href="{{ url_for('dashboard') }}">SnapMeet</a>
+        </div>
+
+        <div class="nav-center">
+            <form action="{{ url_for('search') }}" method="GET" class="search-bar">
+                <input type="text" name="query" placeholder="Search users...">
+            </form>
+        </div>
+
+        <div class="nav-right">
+            <a class="nav-link" href="{{ url_for('view_friend_requests') }}">Friend Requests</a>
+            <a class="nav-link" href="{{ url_for('view_suggested_users') }}">Suggested Users</a>
+            <a class="logout" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

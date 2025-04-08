@@ -1,0 +1,293 @@
+/* === Global Styles === */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f1f2f6;
+    margin: 0;
+    padding: 0;
+}
+
+/* === Error Message === */
+.error {
+    background-color: #ffcccc;
+    border: 1px solid #ff4d4d;
+    color: #b30000;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* === Login & Register Page Styles === */
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2f3542;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+form input[type="submit"] {
+    width: 100%;
+    background-color: #1e90ff;
+    border: none;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+form input[type="submit"]:hover {
+    background-color: #3742fa;
+}
+
+a {
+    text-decoration: none;
+    color: #1e90ff;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.nav {
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* === Navbar === */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #4267B2;
+    color: white;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.logo {
+    font-size: 24px;
+}
+
+/* === Search Bar === */
+.search-bar input {
+    padding: 7px 10px;
+    border-radius: 20px;
+    border: none;
+    width: 250px;
+}
+
+.search-bar button {
+    padding: 7px 15px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 20px;
+    background-color: white;
+    color: #4267B2;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* === Navbar Buttons === */
+.logout-btn {
+    background-color: #29487d;
+    padding: 8px 15px;
+    color: white;
+    text-decoration: none;
+    border-radius: 20px;
+}
+
+/* === Navbar Dropdown === */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    cursor: pointer;
+    padding: 8px 15px;
+    background-color: #29487d;
+    border-radius: 20px;
+    color: white;
+    font-weight: bold;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 220px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+    z-index: 1;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 10px;
+    color: #333;
+}
+
+.dropdown-content div {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-content div:last-child {
+    border-bottom: none;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* === Dashboard Layout === */
+.dashboard-container {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+/* === Sidebar Styles === */
+.left-sidebar,
+.right-sidebar {
+    width: 20%;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 0 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+    align-self: flex-start;
+}
+
+.left-sidebar h3,
+.right-sidebar h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.right-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.right-sidebar ul li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* === Main Feed === */
+.main-feed {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    margin: 0 10px;
+}
+
+/* === Main Content === */
+.main-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.main-content h2 {
+    margin-top: 0;
+}
+
+/* === Post Form === */
+form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    resize: none;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+form input[type="file"] {
+    margin-top: 10px;
+}
+
+form input[type="submit"] {
+    margin-top: 10px;
+    background-color: #1e90ff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* === Post Card === */
+.post {
+    background-color: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.post img {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+/* === Responsive Design === */
+@media screen and (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        display: none;
+    }
+
+    .search-bar input {
+        width: 150px;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .dropdown-content {
+        position: static;
+        margin-top: 10px;
+        box-shadow: none;
+        background-color: #f9f9f9;
+    }
+}
