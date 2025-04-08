@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat with {{ friend['username'] }}
-</title>
+    <title>Chat with {{ friend.username }}</title>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 </head>
 <body>
-    <h2>Chat with {{ friend['username'] }}
-</h2>
+    <h2>Chat with {{ friend.username }}</h2>
 
     <div id="chat-box" style="height:300px; overflow-y:scroll; border:1px solid #ccc; padding:10px;">
         {% for msg in messages %}
@@ -24,8 +22,8 @@
         const socket = io();
 
         const userId = {{ user_id }};
-        const friendId = {{ friend['id'] }};  // <-- Note: use friend.id, not friend_id directly
-        const friendName = "{{ friend.username }}";
+        const friendId = {{ friend.id }};
+        const friendName = "{{ friend.username | escapejs }}";
         const roomId = [userId, friendId].sort().join('-');
 
         socket.emit('join_room', { room: roomId });
