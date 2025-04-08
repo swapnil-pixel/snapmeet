@@ -295,6 +295,7 @@ def accept_request(request_id):
     return redirect(url_for('dashboard'))
 
 @app.route('/chat/<int:friend_id>')
+@app.route('/chat/<int:friend_id>')
 def chat(friend_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -303,14 +304,24 @@ def chat(friend_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Fetch friend's username for display
+    # Get friend's username
     cursor.execute("SELECT username FROM users WHERE id = %s", (friend_id,))
     friend = cursor.fetchone()
+
+    # Get previous messages
+    cursor.execute("""
+        SELECT * FROM messages
+        WHERE (sender_id = %s AND receiver_id = %s)
+           OR (sender_id = %s AND receiver_id = %s)
+        ORDER BY created_at ASC
+    """, (user_id, friend_id, friend_id, user_id))
+    messages = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    return render_template('chat.html', friend=friend, user_id=user_id, friend_id=friend_id)
+    return render_template("chat.html", messages=messages, friend=friend, user_id=user_id)
+
 
 @socketio.on('join_room')
 def on_join(room):

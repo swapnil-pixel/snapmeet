@@ -6,10 +6,15 @@
 </head>
 <body>
     <h2>Chat with {{ friend.username }}</h2>
-    <div id="chat-box" style="height:300px; overflow-y:scroll; border:1px solid #ccc; padding:10px;"></div>
+
+    <div id="chat-box" style="height:300px; overflow-y:scroll; border:1px solid #ccc; padding:10px;">
+        {% for msg in messages %}
+            <p><strong>{{ 'You' if msg.sender_id == user_id else friend.username }}:</strong> {{ msg.message }}</p>
+        {% endfor %}
+    </div>
 
     <form id="chat-form">
-        <input type="text" id="message-input" autocomplete="off">
+        <input type="text" id="message-input" autocomplete="off" required>
         <button type="submit">Send</button>
     </form>
 
@@ -17,26 +22,31 @@
         const socket = io();
 
         const userId = {{ user_id }};
-        const friendId = {{ friend_id }};
+        const friendId = {{ friend.id }};  // <-- Note: use friend.id, not friend_id directly
         const roomId = [userId, friendId].sort().join('-');
 
-        socket.emit('join_room', roomId);
+        socket.emit('join_room', { room: roomId });
 
         document.getElementById('chat-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const msg = document.getElementById('message-input').value;
+            if (!msg.trim()) return;
+
             socket.emit('send_message', {
                 room: roomId,
                 sender_id: userId,
                 receiver_id: friendId,
                 message: msg
             });
+
             document.getElementById('message-input').value = '';
         });
 
         socket.on('receive_message', function(data) {
             const box = document.getElementById('chat-box');
-            box.innerHTML += `<p><strong>${data.sender_name}:</strong> ${data.message}</p>`;
+            const line = document.createElement('p');
+            line.innerHTML = `<strong>${data.sender_id === userId ? 'You' : '{{ friend.username }}'}:</strong> ${data.message}`;
+            box.appendChild(line);
             box.scrollTop = box.scrollHeight;
         });
     </script>
