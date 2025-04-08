@@ -4,10 +4,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-UPLOAD_FOLDER = 'static/uploads'
+
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -16,13 +22,26 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # MySQL connection
+# def get_connection():
+#     return mysql.connector.connect(
+#         host='localhost',
+#         user='root',
+#         password='Swapnil@6320',
+#         database='user_snap_app'
+#     )
+
+print("Connecting to host:", os.environ.get("MYSQL_HOST"))
+
 def get_connection():
     return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='Swapnil@6320',
-        database='user_snap_app'
+        host=os.environ.get("MYSQL_HOST"),
+        port=int(os.environ.get("MYSQL_PORT")),
+        user=os.environ.get("MYSQL_USER"),
+        password=os.environ.get("MYSQL_PASSWORD"),
+        database=os.environ.get("MYSQL_DATABASE")
     )
+
+
 
 # Create initial table (only if not exists)
 def init_db():
@@ -213,10 +232,11 @@ def create_post():
         image_filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
-    cursor = mysql.connection.cursor()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("INSERT INTO posts (user_id, content, image_filename) VALUES (%s, %s, %s)",
                    (user_id, content, image_filename))
-    mysql.connection.commit()
+    conn.commit()
     cursor.close()
 
     return redirect(url_for('dashboard'))
