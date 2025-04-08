@@ -9,7 +9,7 @@ load_dotenv()
 
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet')
 app.secret_key = 'your_secret_key'
 
 
