@@ -334,22 +334,24 @@ def handle_send_message(data):
     receiver_id = data['receiver_id']
     message = data['message']
 
+    # Save to database
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO messages (sender_id, receiver_id, message) VALUES (%s, %s, %s)",
-                   (sender_id, receiver_id, message))
+    cursor.execute("""
+        INSERT INTO messages (sender_id, receiver_id, message)
+        VALUES (%s, %s, %s)
+    """, (sender_id, receiver_id, message))
     conn.commit()
-
-    # Get sender name
-    cursor.execute("SELECT username FROM users WHERE id = %s", (sender_id,))
-    sender_name = cursor.fetchone()[0]
-
+    cursor.close()
     conn.close()
 
+    # Emit message to the same room
     emit('receive_message', {
-        'sender_name': sender_name,
+        'sender_id': sender_id,
+        'receiver_id': receiver_id,
         'message': message
-    }, to=room)
+    }, room=room)
+
 
 
 
