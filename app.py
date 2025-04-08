@@ -324,8 +324,9 @@ def chat(friend_id):
 
 
 @socketio.on('join_room')
-def on_join(room):
-    join_room(room)
+def on_join(data):
+    join_room(data['room'])
+
 
 @socketio.on('send_message')
 def handle_send_message(data):

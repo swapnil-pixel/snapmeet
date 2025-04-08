@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat with {{ friend.username }}</title>
+    <title>Chat with {{ friend['username'] }}
+</title>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 </head>
 <body>
-    <h2>Chat with {{ friend.username }}</h2>
+    <h2>Chat with {{ friend['username'] }}
+</h2>
 
     <div id="chat-box" style="height:300px; overflow-y:scroll; border:1px solid #ccc; padding:10px;">
         {% for msg in messages %}
@@ -22,7 +24,8 @@
         const socket = io();
 
         const userId = {{ user_id }};
-        const friendId = {{ friend.id }};  // <-- Note: use friend.id, not friend_id directly
+        const friendId = {{ friend['id'] }};  // <-- Note: use friend.id, not friend_id directly
+        const friendName = "{{ friend.username }}";
         const roomId = [userId, friendId].sort().join('-');
 
         socket.emit('join_room', { room: roomId });
@@ -45,7 +48,7 @@
         socket.on('receive_message', function(data) {
             const box = document.getElementById('chat-box');
             const line = document.createElement('p');
-            line.innerHTML = `<strong>${data.sender_id === userId ? 'You' : '{{ friend.username }}'}:</strong> ${data.message}`;
+            line.innerHTML = `<strong>${data.sender_id === userId ? 'You' : friendName}:</strong> ${data.message}`;
             box.appendChild(line);
             box.scrollTop = box.scrollHeight;
         });
