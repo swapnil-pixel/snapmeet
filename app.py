@@ -312,7 +312,7 @@ def chat(friend_id):
     cursor.execute("""
         SELECT * FROM messages 
         WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
-        ORDER BY created_at ASC
+        ORDER BY timestamp ASC
     """, (user_id, friend_id, friend_id, user_id))
     
     messages = cursor.fetchall()
