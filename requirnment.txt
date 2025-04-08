@@ -1,5 +1,0 @@
-Flask==2.3.3
-mysql-connector-python==9.2.0
-
-
-
