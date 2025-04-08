@@ -273,6 +273,40 @@ def accept_request(request_id):
 
     return redirect(url_for('dashboard'))
 
+@app.route('/chat/<int:friend_id>', methods=['GET', 'POST'])
+def chat(friend_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        message = request.form['message']
+        cursor.execute("INSERT INTO messages (sender_id, receiver_id, message) VALUES (%s, %s, %s)",
+                       (user_id, friend_id, message))
+        conn.commit()
+
+    # Fetch chat messages between two users
+    cursor.execute("""
+        SELECT * FROM messages 
+        WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
+        ORDER BY created_at ASC
+    """, (user_id, friend_id, friend_id, user_id))
+    
+    messages = cursor.fetchall()
+
+    # Fetch friend's username for display
+    cursor.execute("SELECT username FROM users WHERE id = %s", (friend_id,))
+    friend = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return render_template('chat.html', messages=messages, friend=friend, user_id=user_id)
+
+
 # Logout
 @app.route('/logout')
 def logout():
