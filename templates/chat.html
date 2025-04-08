@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat with {{ friend.username }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h2>Chat with {{ friend.username }}</h2>
+
+    <div class="chat-box">
+        {% for msg in messages %}
+            <div class="message {{ 'sent' if msg.sender_id == user_id else 'received' }}">
+                <p><strong>{{ 'You' if msg.sender_id == user_id else friend.username }}:</strong> {{ msg.message }}</p>
+                <small>{{ msg.timestamp }}</small>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form method="POST">
+        <textarea name="message" placeholder="Type your message..." required></textarea>
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>

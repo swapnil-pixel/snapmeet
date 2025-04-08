@@ -263,6 +263,31 @@ form input[type="submit"] {
     margin-top: 10px;
 }
 
+.chat-box {
+    max-height: 400px;
+    overflow-y: scroll;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+.message {
+    margin-bottom: 15px;
+}
+
+.sent {
+    text-align: right;
+    background-color: #dcf8c6;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.received {
+    text-align: left;
+    background-color: #f1f0f0;
+    padding: 8px;
+    border-radius: 10px;
+}
+
 /* === Responsive Design === */
 @media screen and (max-width: 768px) {
     .dashboard-container {
