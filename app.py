@@ -295,7 +295,6 @@ def accept_request(request_id):
     return redirect(url_for('dashboard'))
 
 @app.route('/chat/<int:friend_id>')
-@app.route('/chat/<int:friend_id>')
 def chat(friend_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
