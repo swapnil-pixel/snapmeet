@@ -3,12 +3,13 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
-
+from flask_socketio import SocketIO, emit, join_room
 from dotenv import load_dotenv
 load_dotenv()
 
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 app.secret_key = 'your_secret_key'
 
 
@@ -293,7 +294,7 @@ def accept_request(request_id):
 
     return redirect(url_for('dashboard'))
 
-@app.route('/chat/<int:friend_id>', methods=['GET', 'POST'])
+@app.route('/chat/<int:friend_id>')
 def chat(friend_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -302,21 +303,6 @@ def chat(friend_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    if request.method == 'POST':
-        message = request.form['message']
-        cursor.execute("INSERT INTO messages (sender_id, receiver_id, message) VALUES (%s, %s, %s)",
-                       (user_id, friend_id, message))
-        conn.commit()
-
-    # Fetch chat messages between two users
-    cursor.execute("""
-        SELECT * FROM messages 
-        WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
-        ORDER BY timestamp ASC
-    """, (user_id, friend_id, friend_id, user_id))
-    
-    messages = cursor.fetchall()
-
     # Fetch friend's username for display
     cursor.execute("SELECT username FROM users WHERE id = %s", (friend_id,))
     friend = cursor.fetchone()
@@ -324,7 +310,36 @@ def chat(friend_id):
     cursor.close()
     conn.close()
 
-    return render_template('chat.html', messages=messages, friend=friend, user_id=user_id)
+    return render_template('chat.html', friend=friend, user_id=user_id, friend_id=friend_id)
+
+@socketio.on('join_room')
+def on_join(room):
+    join_room(room)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    sender_id = data['sender_id']
+    receiver_id = data['receiver_id']
+    message = data['message']
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO messages (sender_id, receiver_id, message) VALUES (%s, %s, %s)",
+                   (sender_id, receiver_id, message))
+    conn.commit()
+
+    # Get sender name
+    cursor.execute("SELECT username FROM users WHERE id = %s", (sender_id,))
+    sender_name = cursor.fetchone()[0]
+
+    conn.close()
+
+    emit('receive_message', {
+        'sender_name': sender_name,
+        'message': message
+    }, to=room)
+
 
 
 # Logout
@@ -336,4 +351,4 @@ def logout():
 # Run
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    socketio.run(app, debug=True)
