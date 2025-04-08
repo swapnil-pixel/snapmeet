@@ -292,27 +292,38 @@ form input[type="submit"] {
 @media screen and (max-width: 768px) {
     .dashboard-container {
         flex-direction: column;
+        padding: 10px;
     }
 
     .left-sidebar,
     .right-sidebar {
-        display: none;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .main-content {
+        width: 100%;
+        margin: 0;
     }
 
     .search-bar input {
-        width: 150px;
+        width: 100%;
+        margin-bottom: 10px;
     }
 
-    .nav-links {
+    .navbar {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
     }
 
-    .dropdown-content {
-        position: static;
+    .navbar .search-bar {
+        width: 100%;
         margin-top: 10px;
-        box-shadow: none;
-        background-color: #f9f9f9;
+    }
+
+    .logout-btn,
+    .nav-link {
+        margin-top: 10px;
+        display: block;
     }
 }
