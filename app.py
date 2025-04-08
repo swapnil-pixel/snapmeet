@@ -3,6 +3,7 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -29,10 +30,7 @@ def allowed_file(filename):
 #         database='user_snap_app'
 #     )
 
-
-import os
-from dotenv import load_dotenv
-load_dotenv()
+print("Connecting to host:", os.environ.get("MYSQL_HOST"))
 
 def get_connection():
     return mysql.connector.connect(
