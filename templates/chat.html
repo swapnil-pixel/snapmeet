@@ -5,20 +5,68 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h2>Chat with {{ friend.username }}</h2>
-
-    <div class="chat-box">
-        {% for msg in messages %}
-            <div class="message {{ 'sent' if msg.sender_id == user_id else 'received' }}">
-                <p><strong>{{ 'You' if msg.sender_id == user_id else friend.username }}:</strong> {{ msg.message }}</p>
-                <small>{{ msg.timestamp }}</small>
-            </div>
-        {% endfor %}
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="{{ url_for('dashboard') }}">← Back</a>
+        <h2>Chat with {{ friend.username }}</h2>
     </div>
 
-    <form method="POST">
-        <textarea name="message" placeholder="Type your message..." required></textarea>
-        <button type="submit">Send</button>
-    </form>
+    <!-- Vanish Chat Button -->
+    <div style="text-align:right; margin: 15px 20px 0;">
+        <form action="{{ url_for('vanish_chat', friend_id=friend.id) }}" method="POST"
+              onsubmit="return confirm('Are you sure you want to vanish this chat? This cannot be undone.');">
+            <button type="submit" class="vanish-btn">
+                🧨 Vanish Chat
+            </button>
+        </form>
+    </div>
+
+    <!-- Chat Wrapper -->
+    <div class="chat-wrapper">
+        <div class="chat-box">
+            {% for msg in messages %}
+                <div class="chat-message {{ 'sent' if msg.sender_id == user_id else 'received' }}">
+                    <div class="bubble">
+                        <p class="text"><strong>{{ 'You' if msg.sender_id == user_id else friend.username }}:</strong> {{ msg.message }}</p>
+                        <span class="timestamp">{{ msg.timestamp }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Form -->
+        <form method="POST" class="chat-form">
+            <textarea name="message" placeholder="Type your message..." required></textarea>
+            <button type="submit" class="send-btn">Send</button>
+        </form>
+    </div>
+
+    <script>
+    const userId = {{ user_id }};
+    const friendId = {{ friend.id }};
+    const chatBox = document.querySelector('.chat-box');
+
+    function fetchMessages() {
+        fetch(`/get_messages/${friendId}`)
+            .then(response => response.json())
+            .then(data => {
+                chatBox.innerHTML = '';
+                data.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.classList.add('message');
+                    msgDiv.classList.add(msg.sender_id === userId ? 'sent' : 'received');
+                    msgDiv.innerHTML = `<p><strong>${msg.sender_id === userId ? 'You' : '{{ friend.username }}'}:</strong> ${msg.message}</p>
+                                        <small>${msg.timestamp}</small>`;
+                    chatBox.appendChild(msgDiv);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+    }
+
+    // Initial fetch + polling every 3 seconds
+    fetchMessages();
+    setInterval(fetchMessages, 3000);
+</script>
+
 </body>
 </html>

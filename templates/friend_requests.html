@@ -7,22 +7,26 @@
 </head>
 <body>
     <div class="navbar">
-        <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
-        <h2>Friend Requests</h2>
+        <a href="{{ url_for('dashboard') }}" class="back-btn">← Back</a>
+        <h2>👥 Friend Requests</h2>
     </div>
 
-    <div class="content">
+    <div class="content animated-section">
         {% if friend_requests %}
             {% for req in friend_requests %}
-                <div class="request">
-                    <p>{{ req.username }}</p>
+                <div class="card friend-card">
+                    <p>📬 <strong>{{ req.username }}</strong> sent you a request!</p>
                     <form method="POST" action="/accept_request/{{ req.id }}">
-                        <input type="submit" value="Accept">
+                        <input type="submit" value="✅ Accept" class="accept-btn">
                     </form>
                 </div>
             {% endfor %}
         {% else %}
-            <p>No new requests.</p>
+            <div class="no-requests">
+                <h3>🎉 You're all caught up!</h3>
+                <p>No new friend requests. Enjoy exploring!</p>
+                <img src="{{ url_for('static', filename='fun/no-requests.png') }}" alt="No requests" class="fun-img">
+            </div>
         {% endif %}
     </div>
 </body>

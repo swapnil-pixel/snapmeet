@@ -7,19 +7,27 @@
 </head>
 <body>
     <div class="navbar">
-        <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
-        <h2>Suggested Users</h2>
+        <a href="{{ url_for('dashboard') }}" class="back-btn">← Back</a>
+        <h2>✨ People You May Know</h2>
     </div>
 
-    <div class="content">
-        {% for u in suggested_users %}
-            <div class="user">
-                <p>{{ u.username }}</p>
-                <form method="POST" action="/send_request/{{ u.id }}">
-                    <button type="submit">Send Request</button>
-                </form>
+    <div class="content animated-section">
+        {% if suggested_users %}
+            {% for u in suggested_users %}
+                <div class="card user-card">
+                    <p>👤 <strong>{{ u.username }}</strong></p>
+                    <form method="POST" action="/send_request/{{ u.id }}">
+                        <button type="submit" class="send-btn">➕ Send Request</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-suggestions">
+                <h3>😎 You've connected with everyone!</h3>
+                <p>Check back later for more suggestions.</p>
+                <img src="{{ url_for('static', filename='fun/no-suggestions.png') }}" alt="No suggestions" class="fun-img">
             </div>
-        {% endfor %}
+        {% endif %}
     </div>
 </body>
 </html>

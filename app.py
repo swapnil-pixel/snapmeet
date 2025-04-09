@@ -318,13 +318,36 @@ def chat(friend_id):
     messages = cursor.fetchall()
 
     # Fetch friend's username for display
-    cursor.execute("SELECT username FROM users WHERE id = %s", (friend_id,))
+    cursor.execute("SELECT id,username FROM users WHERE id = %s", (friend_id,))
     friend = cursor.fetchone()
 
     cursor.close()
     conn.close()
 
     return render_template('chat.html', messages=messages, friend=friend, user_id=user_id)
+
+@app.route('/vanish_chat/<int:friend_id>', methods=['POST'])
+def vanish_chat(friend_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Delete messages between both users
+    cursor.execute("""
+        DELETE FROM messages
+        WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s)
+    """, (user_id, friend_id, friend_id, user_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for('chat', friend_id=friend_id))
+
 
 
 # Logout
