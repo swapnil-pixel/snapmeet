@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
-
+from flask import jsonify
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -139,7 +139,6 @@ def login():
             return "Invalid email or password"
     return render_template('login.html')
 
-# Dashboard
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -150,8 +149,14 @@ def dashboard():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Fetch only the posts created by the current user
-    cursor.execute("SELECT * FROM posts WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
+    # Fetch feed posts with the username of the author (most recent first)
+    cursor.execute("""
+        SELECT posts.*, users.username
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        ORDER BY posts.created_at DESC
+        LIMIT 100
+    """)
     posts = cursor.fetchall()
 
     # Get current user info
@@ -174,6 +179,89 @@ def dashboard():
     conn.close()
 
     return render_template('dashboard.html', posts=posts, user=user, friends=friends)
+
+@app.route('/post/<int:post_id>/comment', methods=['POST'])
+def post_comment(post_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    uid = session['user_id']
+    comment = request.form.get('comment','').strip()
+    if not comment:
+        return redirect(url_for('dashboard'))
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO post_comments (post_id, user_id, comment) VALUES (%s,%s,%s)", (post_id, uid, comment))
+    conn.commit()
+    # notify post owner
+    cursor.execute("SELECT user_id FROM posts WHERE id=%s", (post_id,))
+    owner = cursor.fetchone()
+    if owner and owner[0] != uid:
+        cursor.execute("INSERT INTO notifications (user_id, actor_id, type, ref_id, text) VALUES (%s,%s,%s,%s,%s)",
+                       (owner[0], uid, 'comment', post_id, 'commented on your post'))
+        conn.commit()
+    cursor.close(); conn.close()
+    return redirect(url_for('dashboard'))
+
+@app.route('/notifications')
+def notifications():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    uid = session['user_id']
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT n.*, u.username as actor_name FROM notifications n LEFT JOIN users u ON n.actor_id = u.id WHERE n.user_id=%s ORDER BY created_at DESC LIMIT 50", (uid,))
+    notes = cur.fetchall()
+    cur.close(); conn.close()
+    return render_template('notifications.html', notifications=notes)
+
+@app.route('/notifications/mark_read/<int:nid>', methods=['POST'])
+def mark_notif_read(nid):
+    if 'user_id' not in session:
+        return jsonify({"ok": False}), 401
+    conn = get_connection(); c = conn.cursor()
+    c.execute("UPDATE notifications SET is_read=1 WHERE id=%s", (nid,))
+    conn.commit(); c.close(); conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route('/post/<int:post_id>/toggle_like', methods=['POST'])
+def toggle_like(post_id):
+    if 'user_id' not in session:
+        return jsonify({"ok": False, "error": "unauthenticated"}), 401
+    uid = session['user_id']
+    conn = get_connection()
+    cursor = conn.cursor()
+    # check if exists
+    cursor.execute("SELECT id FROM post_reactions WHERE post_id=%s AND user_id=%s", (post_id, uid))
+    existing = cursor.fetchone()
+    if existing:
+        cursor.execute("DELETE FROM post_reactions WHERE id=%s", (existing[0],))
+        conn.commit()
+        # optional create notification removal logic
+        result = {"liked": False}
+    else:
+        cursor.execute("INSERT INTO post_reactions (post_id, user_id) VALUES (%s, %s)", (post_id, uid))
+        conn.commit()
+        # create notification for post owner
+        cursor.execute("SELECT user_id FROM posts WHERE id=%s", (post_id,))
+        owner = cursor.fetchone()
+        if owner and owner[0] != uid:
+            cursor.execute("INSERT INTO notifications (user_id, actor_id, type, ref_id, text) VALUES (%s, %s, %s, %s, %s)",
+                           (owner[0], uid, 'like', post_id, 'someone liked your post'))
+            conn.commit()
+        result = {"liked": True}
+    cursor.close()
+    conn.close()
+    # return updated counts
+    # count likes
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM post_reactions WHERE post_id=%s", (post_id,))
+    likes_count = c.fetchone()[0]
+    c.close()
+    conn.close()
+    result["likes_count"] = likes_count
+    return jsonify(result)
 
 
 # Friend Requests Page

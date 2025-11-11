@@ -12,9 +12,8 @@
     </div>
 
     <!-- Vanish Chat Button -->
-    <div style="text-align:right; margin: 15px 20px 0;">
-        <form action="{{ url_for('vanish_chat', friend_id=friend.id) }}" method="POST"
-              onsubmit="return confirm('Are you sure you want to vanish this chat? This cannot be undone.');">
+    <div style="text-align: right; margin: 15px 20px 0;">
+        <form action="{{ url_for('vanish_chat', friend_id=friend.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to vanish this chat? This cannot be undone.');">
             <button type="submit" class="vanish-btn">
                 🧨 Vanish Chat
             </button>
@@ -42,8 +41,8 @@
     </div>
 
     <script>
-    const userId = {{ user_id }};
-    const friendId = {{ friend.id }};
+    const userId = parseInt("{{ user_id }}", 10);
+    const friendId = "{{ friend.id }}";
     const chatBox = document.querySelector('.chat-box');
 
     function fetchMessages() {
