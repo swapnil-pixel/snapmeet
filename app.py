@@ -216,6 +216,23 @@ def view_suggested_users():
 
     return render_template('suggested_users.html', suggested_users=suggested)
 
+@app.route('/search')
+def search():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    query = request.args.get('query', '').strip()
+    results = []
+
+    if query:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, username FROM users WHERE username LIKE %s LIMIT 50", (f"%{query}%",))
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+    return render_template('search_results.html', query=query, results=results)
 
 # Create post
 @app.route('/post', methods=['POST'])
