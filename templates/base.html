@@ -6,23 +6,40 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-left">
-            <a class="logo" href="{{ url_for('dashboard') }}">SnapMeet</a>
-        </div>
+        <nav class="navbar">
+  <!-- Left section -->
+  <div class="nav-left" style="display:flex; align-items:center; gap:20px;">
+    <a class="logo" href="{{ url_for('dashboard') }}">Job</a>
 
-        <div class="nav-center">
-            <form action="{{ url_for('search') }}" method="GET" class="search-bar">
-                <input type="text" name="query" placeholder="Search users...">
-            </form>
-        </div>
+    <!-- Home button -->
+    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" 
+       href="{{ url_for('dashboard') }}" title="Home">
+       🏠 Home
+    </a>
+  </div>
 
-        <div class="nav-right">
-            <a class="nav-link" href="{{ url_for('view_friend_requests') }}">Friend Requests</a>
-            <a class="nav-link" href="{{ url_for('view_suggested_users') }}">Suggested Users</a>
-            <a class="logout" href="{{ url_for('logout') }}">Logout</a>
-        </div>
-    </nav>
+  <!-- Center section (search) -->
+  <div class="nav-center">
+    <form action="{{ url_for('search') }}" method="GET" class="search-bar">
+      <input type="text" name="query" placeholder="Search users...">
+    </form>
+  </div>
+
+  <!-- Right section -->
+  <div class="nav-right">
+    <a class="nav-link {% if request.endpoint == 'view_friend_requests' %}active{% endif %}" 
+       href="{{ url_for('view_friend_requests') }}">Friend Requests</a>
+
+    <a class="nav-link {% if request.endpoint == 'view_suggested_users' %}active{% endif %}" 
+       href="{{ url_for('view_suggested_users') }}">Suggested Users</a>
+
+    <a class="nav-link" href="{{ url_for('view_profile_page', user_id=session['user_id']) }}">My Profile</a>
+
+
+    <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+  </div>
+</nav>
+
 
     <div class="main-container">
         {% block content %}{% endblock %}

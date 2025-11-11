@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-wrapper">
+  <div style="max-width:900px; margin:28px auto;">
+    <div class="card">
+      <h2>{{ profile and 'Edit Profile' or 'Create your profile' }}</h2>
+      <p class="muted">Make a profile that stands out — add a headline, skills and a short bio.</p>
+
+      <form method="post" enctype="multipart/form-data" style="margin-top:16px;">
+        <label>Headline</label>
+        <input name="headline" type="text" placeholder="e.g. Computer Science Student • ML enthusiast" value="{{ profile.headline if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+
+        <label>Bio</label>
+        <textarea name="bio" rows="5" placeholder="Tell people about yourself, what you study, what you build..." style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">{{ profile.bio if profile else '' }}</textarea>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:180px;">
+            <label>College</label>
+            <input name="college" type="text" value="{{ profile.college if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+          </div>
+          <div style="width:160px;">
+            <label>Graduation Year</label>
+            <input name="graduation_year" type="number" min="1950" max="2099" value="{{ profile.graduation_year if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+          </div>
+        </div>
+
+        <label>Location</label>
+        <input name="location" type="text" value="{{ profile.location if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+
+        <label>Skills (comma separated)</label>
+        <input name="skills" type="text" placeholder="Python,SQL,Machine Learning" value="{{ profile.skills if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+
+        <label>Interests (comma separated)</label>
+        <input name="interests" type="text" placeholder="AI,Open Source,Product" value="{{ profile.interests if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+
+        <label>Website</label>
+        <input name="website" type="text" placeholder="https://..." value="{{ profile.website if profile else '' }}" style="width:100%; padding:10px; margin:8px 0; border-radius:8px;">
+
+        <div style="display:flex; gap:12px; align-items:center; margin-top:10px;">
+          <div>
+            <label>Profile image</label><br>
+            {% if profile and profile.profile_image %}
+              <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" width="80" style="border-radius:8px; display:block; margin-bottom:6px;">
+            {% endif %}
+            <input type="file" name="profile_image" accept="image/*">
+          </div>
+
+          <div>
+            <label>Resume (pdf/doc)</label><br>
+            {% if profile and profile.resume_filename %}
+              <a class="small-link" href="{{ url_for('static', filename='uploads/profiles/' ~ profile.resume_filename) }}" target="_blank">View resume</a>
+            {% endif %}
+            <input type="file" name="resume" accept=".pdf,.doc,.docx">
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <button class="btn primary" type="submit">Save profile</button>
+          <a class="small-link" href="{{ url_for('dashboard') }}" style="margin-left:12px;">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

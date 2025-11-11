@@ -3,8 +3,16 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
+from flask import flash, jsonify
+from werkzeug.utils import secure_filename
 from flask import jsonify
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+
+
 load_dotenv()
 
 
@@ -12,14 +20,44 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# -------------------------
+# Upload / file config
+# -------------------------
+import time
 
-# File extension check
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Public uploads live under static/uploads so Flask can serve them in dev.
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+PROFILE_UPLOAD_DIR = os.path.join(UPLOAD_FOLDER, 'profiles')
+
+# create folders if missing
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROFILE_UPLOAD_DIR, exist_ok=True)
+
+# allowed extensions sets
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_IMG = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_RESUME = {'pdf', 'doc', 'docx'}
+
+# store in app config for later reference
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_UPLOAD_DIR'] = PROFILE_UPLOAD_DIR
+
+# file extension check (supports passing a custom allowed set)
+def allowed_file(filename, allowed_set=None):
+    if not filename or '.' not in filename:
+        return False
+    allowed = allowed_set if allowed_set is not None else ALLOWED_EXTENSIONS
+    return filename.rsplit('.', 1)[1].lower() in allowed
+
+
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 
 # MySQL connection
 # def get_connection():
@@ -151,17 +189,25 @@ def dashboard():
 
     # Fetch feed posts with the username of the author (most recent first)
     cursor.execute("""
-        SELECT posts.*, users.username
-        FROM posts
-        JOIN users ON posts.user_id = users.id
-        ORDER BY posts.created_at DESC
-        LIMIT 100
-    """)
+    SELECT posts.*,
+           users.username,
+           profiles.profile_image AS author_image
+    FROM posts
+    JOIN users ON posts.user_id = users.id
+    LEFT JOIN profiles ON users.id = profiles.user_id
+    ORDER BY posts.created_at DESC
+    LIMIT 100
+""")
     posts = cursor.fetchall()
+
 
     # Get current user info
     cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
+
+    # Load profile for current user (if any)
+    cursor.execute("SELECT * FROM profiles WHERE user_id = %s", (user_id,))
+    profile = cursor.fetchone()
 
     # Fetch accepted friends (both directions)
     cursor.execute('''
@@ -178,7 +224,113 @@ def dashboard():
     cursor.close()
     conn.close()
 
-    return render_template('dashboard.html', posts=posts, user=user, friends=friends)
+    # render dashboard with profile included
+    return render_template('dashboard.html', posts=posts, user=user, friends=friends, profile=profile)
+
+
+
+@app.route('/profile/create', methods=['GET', 'POST'])
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def create_or_edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+
+    # try to load existing profile
+    cur.execute("SELECT * FROM profiles WHERE user_id=%s", (user_id,))
+    profile = cur.fetchone()
+
+    if request.method == 'POST':
+        headline = request.form.get('headline', '').strip()
+        bio = request.form.get('bio', '').strip()
+        location = request.form.get('location', '').strip()
+        college = request.form.get('college', '').strip()
+        graduation_year = request.form.get('graduation_year') or None
+        skills = request.form.get('skills', '').strip()  # comma-separated
+        interests = request.form.get('interests', '').strip()
+        website = request.form.get('website', '').strip()
+
+        # files
+        profile_image = request.files.get('profile_image')
+        resume = request.files.get('resume')
+
+        profile_image_filename = profile.get('profile_image') if profile else None
+        resume_filename = profile.get('resume_filename') if profile else None
+
+        # handle profile image
+        if profile_image and profile_image.filename and allowed_file(profile_image.filename, ALLOWED_IMG):
+            fn = secure_filename(profile_image.filename)
+            # prefix user id and timestamp for uniqueness
+            fn = f"user{user_id}_profile_{int(__import__('time').time())}_{fn}"
+            upload_result = cloudinary.uploader.upload(profile_image, folder="profiles/")
+            profile_image_filename = upload_result['secure_url']
+
+
+        # handle resume
+        if resume and resume.filename and allowed_file(resume.filename, ALLOWED_RESUME):
+            rf = secure_filename(resume.filename)
+            rf = f"user{user_id}_resume_{int(__import__('time').time())}_{rf}"
+            resume.save(os.path.join(app.config['PROFILE_UPLOAD_DIR'], rf))
+            resume_filename = rf
+
+        if profile:
+            # update
+            cur.execute("""
+                UPDATE profiles SET headline=%s, bio=%s, location=%s, college=%s, graduation_year=%s,
+                    skills=%s, interests=%s, website=%s, profile_image=%s, resume_filename=%s
+                WHERE user_id=%s
+            """, (headline, bio, location, college, graduation_year, skills, interests, website, profile_image_filename, resume_filename, user_id))
+        else:
+            # insert
+            cur.execute("""
+                INSERT INTO profiles (user_id, headline, bio, location, college, graduation_year, skills, interests, website, profile_image, resume_filename)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (user_id, headline, bio, location, college, graduation_year, skills, interests, website, profile_image_filename, resume_filename))
+        conn.commit()
+        cur.close(); conn.close()
+        return redirect(url_for('view_profile_page', user_id=user_id))
+
+    cur.close()
+    conn.close()
+    return render_template('profile_form.html', profile=profile)
+
+
+@app.route('/profile/<int:user_id>')
+def view_profile_page(user_id):
+    # get user basic info
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT id, username, email FROM users WHERE id=%s", (user_id,))
+    user = cur.fetchone()
+    if not user:
+        cur.close(); conn.close()
+        return "User not found", 404
+
+    # get profile data
+    cur.execute("SELECT * FROM profiles WHERE user_id=%s", (user_id,))
+    profile = cur.fetchone()
+
+    # fetch posts by user (optional)
+    cur.execute("""
+    SELECT posts.*,
+           users.username,
+           profiles.profile_image AS author_image
+    FROM posts
+    JOIN users ON posts.user_id = users.id
+    LEFT JOIN profiles ON users.id = profiles.user_id
+    WHERE posts.user_id=%s
+    ORDER BY posts.created_at DESC
+    LIMIT 20
+""", (user_id,))
+    posts = cur.fetchall()
+
+
+    cur.close()
+    conn.close()
+    return render_template('profile_view.html', user=user, profile=profile, posts=posts)
 
 @app.route('/post/<int:post_id>/comment', methods=['POST'])
 def post_comment(post_id):
@@ -334,8 +486,13 @@ def create_post():
     image_filename = None
 
     if image and image.filename:
-        image_filename = secure_filename(image.filename)
-        image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+        try:
+            upload_result = cloudinary.uploader.upload(image, folder="posts/")
+            image_filename = upload_result['secure_url']
+        except Exception as e:
+            print("Cloudinary upload failed:", e)
+            image_filename = None
+
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -346,23 +503,23 @@ def create_post():
 
     return redirect(url_for('dashboard'))
 
-@app.route('/user/<int:user_id>')
-def view_user_profile(user_id):
-    # Get the user's info
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
+# @app.route('/user/<int:user_id>')
+# def view_user_profile(user_id):
+#     # Get the user's info
+#     conn = get_connection()
+#     cursor = conn.cursor(dictionary=True)
+#     cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+#     user = cursor.fetchone()
 
-    if not user:
-        return "User not found", 404
+#     if not user:
+#         return "User not found", 404
 
-    # Get posts by this user
-    cursor.execute("SELECT * FROM posts WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
-    posts = cursor.fetchall()
-    cursor.close()
+#     # Get posts by this user
+#     cursor.execute("SELECT * FROM posts WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
+#     posts = cursor.fetchall()
+#     cursor.close()
 
-    return render_template('user_profile.html', user=user, posts=posts)
+#     return render_template('user_profile.html', user=user, posts=posts)
 
 
 # Send friend request

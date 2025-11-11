@@ -6,9 +6,24 @@
     <!-- LEFT column -->
     <aside class="col left-col">
       <div class="card profile-card">
-        <div class="avatar-large">{{ user.username[0]|upper }}</div>
-        <h3 class="name">{{ user.username }}</h3>
-        <p class="email">{{ user.email }}</p>
+  <div class="avatar-large">
+        {% if profile and profile.profile_image %}
+        {% if profile.profile_image.startswith('http') %}
+            <img src="{{ profile.profile_image }}" alt="profile" style="width:120px; height:120px; object-fit:cover; border-radius:12px; display:block; margin:0 auto;">
+        {% else %}
+            <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" alt="profile" style="width:120px; height:120px; object-fit:cover; border-radius:12px; display:block; margin:0 auto;">
+        {% endif %}
+        {% else %}
+        <div style="width:120px; height:120px; display:grid; place-items:center; font-size:36px; font-weight:700; border-radius:12px; margin:0 auto; background:linear-gradient(135deg,#3B82F6,#6D28D9); color:#fff;">
+            {{ user.username[0]|upper }}
+        </div>
+        {% endif %}
+    </div>
+
+    <h3 class="name">{{ user.username }}</h3>
+    <p class="email">{{ user.email }}</p>
+    <a class="small-link" href="{{ url_for('create_or_edit_profile') }}" style="display:block; margin-top:6px;">Edit Profile</a>
+
         <hr>
         <h4 class="muted">Your Friends</h4>
 
@@ -18,7 +33,7 @@
             <li>
               <div class="friend-left">
                 <div class="friend-avatar">{{ f.username[0]|upper }}</div>
-                <a class="friend-name" href="{{ url_for('view_user_profile', user_id=f.id) }}">{{ f.username }}</a>
+                <a class="friend-name" href="{{ url_for('view_profile_page', user_id=f.id) }}">{{ f.username }}</a>
               </div>
               <div class="friend-actions">
                 <a href="{{ url_for('chat', friend_id=f.id) }}" class="btn small primary">Chat</a>
@@ -42,7 +57,7 @@
               <form method="POST" action="{{ url_for('send_request', receiver_id=s.id) }}" style="margin:0;">
                 <button class="btn small">Add</button>
               </form>
-              <a class="small-link" href="{{ url_for('view_user_profile', user_id=s.id) }}">Profile</a>
+              <a class="small-link" href="{{ url_for('view_profile_page', user_id=s.id) }}">Profile</a>
             </div>
           </div>
         </div>
@@ -54,17 +69,28 @@
     <!-- CENTER column -->
     <main class="col center-col">
       <div class="hero">
-        <h1>Welcome to SnapMeet 🎉</h1>
+        <h1>Welcome to Job 🎉</h1>
         <p class="muted">Connect with nearby students — snaps, requests & chats.</p>
       </div>
 
       <!-- Composer -->
       <div class="card composer">
         <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data">
-          <div class="composer-top">
-            <div class="avatar-mini">{{ user.username[0]|upper }}</div>
+            <div class="composer-top">
+            <div class="avatar-mini">
+                {% if profile and profile.profile_image %}
+                {% if profile.profile_image.startswith('http') %}
+                    <img src="{{ profile.profile_image }}" alt="me" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" alt="me" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">
+                {% endif %}
+                {% else %}
+                {{ user.username[0]|upper }}
+                {% endif %}
+            </div>
             <textarea name="content" placeholder="What's on your mind?" rows="3" required></textarea>
-          </div>
+            </div>
+
 
           <div class="composer-actions">
             <label class="file-label">
@@ -97,7 +123,18 @@
         {% set author = post.username if post.username is defined and post.username else 'Unknown' %}
         <article class="card post-card">
           <div class="post-header">
-            <div class="avatar-mini">{{ author[0]|upper }}</div>
+            <div class="avatar-mini">
+                {% if post.author_image %}
+                    {% if post.author_image.startswith('http') %}
+                    <img src="{{ post.author_image }}" alt="{{ author }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ post.author_image) }}" alt="{{ author }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    {% endif %}
+                {% else %}
+                    {{ author[0]|upper }}
+                {% endif %}
+                </div>
+
             <div style="flex:1;">
               <div class="post-author">{{ author }}</div>
               <div class="post-time muted">{{ post.created_at }}</div>
@@ -111,11 +148,12 @@
           </div>
 
           <div class="post-body">
-            <p>{{ post.content }}</p>
-            {% if post.image_filename %}
-              <img class="post-image" src="{{ url_for('static', filename='uploads/' + post.image_filename) }}" alt="post image">
-            {% endif %}
-          </div>
+                <p>{{ post.content }}</p>
+                {% if post.image_filename %}
+                <img class="post-image" src="{{ post.image_filename }}" alt="post image">
+                {% endif %}
+            </div>
+
 
           <div class="post-actions" style="margin-top:12px; align-items:center;">
             <!-- Like button (AJAX) -->
@@ -125,7 +163,7 @@
             </button>
 
             <a class="small-link" href="#" data-open-comment="{{ post.id }}" style="margin-left:8px;">Comment</a>
-            <a class="small-link" href="{{ url_for('view_user_profile', user_id=post.user_id) }}" style="margin-left:8px;">View profile</a>
+            <a class="small-link" href="{{ url_for('view_profile_page', user_id=post.user_id) }}" style="margin-left:8px;">View profile</a>
           </div>
 
           <!-- comment form (hidden, toggle) -->
