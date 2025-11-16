@@ -1,33 +1,35 @@
-<!-- templates/friend_requests.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Friend Requests</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <a href="{{ url_for('dashboard') }}" class="back-btn">← Back</a>
-        <h2>👥 Friend Requests</h2>
-    </div>
+{% extends "base.html" %}
+{% block title %}Friend Requests — SnapMeet{% endblock %}
 
-    <div class="content animated-section">
-        {% if friend_requests %}
-            {% for req in friend_requests %}
-                <div class="card friend-card">
-                    <p>📬 <strong>{{ req.username }}</strong> sent you a request!</p>
-                    <form method="POST" action="/accept_request/{{ req.id }}">
-                        <input type="submit" value="✅ Accept" class="accept-btn">
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-requests">
-                <h3>🎉 You're all caught up!</h3>
-                <p>No new friend requests. Enjoy exploring!</p>
-                <img src="{{ url_for('static', filename='fun/no-requests.png') }}" alt="No requests" class="fun-img">
-            </div>
-        {% endif %}
+{% block content %}
+<div class="insta-container">
+
+    <h2 class="req-title">Friend Requests</h2>
+
+    {% if not requests %}
+        <p class="muted center" style="margin-top:20px;">No pending requests 🎉</p>
+    {% endif %}
+
+    {% for req in requests %}
+    <div class="req-card">
+
+        <!-- Avatar -->
+        <div class="req-avatar">
+            {{ req.username[0]|upper }}
+        </div>
+
+        <!-- Info -->
+        <div class="req-info">
+            <div class="req-name">{{ req.username }}</div>
+        </div>
+
+        <!-- Accept Button -->
+        <form method="POST" action="{{ url_for('accept_request', request_id=req.id) }}">
+            <button class="btn small primary req-accept-btn">Accept</button>
+        </form>
+
     </div>
-</body>
-</html>
+    {% endfor %}
+
+</div>
+{% endblock %}

@@ -1,48 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>SnapMeet</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}SnapMeet{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-        <nav class="navbar">
-  <!-- Left section -->
-  <div class="nav-left" style="display:flex; align-items:center; gap:20px;">
-    <a class="logo" href="{{ url_for('dashboard') }}">Job</a>
-
-    <!-- Home button -->
-    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" 
-       href="{{ url_for('dashboard') }}" title="Home">
-       🏠 Home
-    </a>
-  </div>
-
-  <!-- Center section (search) -->
-  <div class="nav-center">
-    <form action="{{ url_for('search') }}" method="GET" class="search-bar">
-      <input type="text" name="query" placeholder="Search users...">
-    </form>
-  </div>
-
-  <!-- Right section -->
-  <div class="nav-right">
-    <a class="nav-link {% if request.endpoint == 'view_friend_requests' %}active{% endif %}" 
-       href="{{ url_for('view_friend_requests') }}">Friend Requests</a>
-
-    <a class="nav-link {% if request.endpoint == 'view_suggested_users' %}active{% endif %}" 
-       href="{{ url_for('view_suggested_users') }}">Suggested Users</a>
-
-    <a class="nav-link" href="{{ url_for('view_profile_page', user_id=session['user_id']) }}">My Profile</a>
-
-
-    <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
-  </div>
-</nav>
-
-
-    <div class="main-container">
-        {% block content %}{% endblock %}
+  <header class="navbar">
+    <div class="nav-left">
+      <a class="logo" href="{{ url_for('dashboard') }}">SnapMeet</a>
     </div>
+
+    <nav class="nav-center">
+      <a class="nav-link" href="{{ url_for('dashboard') }}">🏠 Home</a>
+      <form class="nav-search" action="{{ url_for('search') }}" method="GET">
+      <input 
+        type="text" 
+        name="query" 
+        placeholder="Search users..." 
+        class="nav-search-input"
+      >
+      <button type="submit" class="nav-search-btn">🔎</button>
+    </form>
+
+      <a class="nav-link" href="{{ url_for('view_friend_requests') }}">🤝 Requests</a>
+      <a class="nav-link" href="{{ url_for('notifications') }}">🔔 Notifications</a>
+    </nav>
+
+ <div class="nav-right">
+    {% if session.get('user_id') %}
+
+        <!-- Avatar -->
+        <a class="nav-profile" href="{{ url_for('view_profile_page', user_id=session['user_id']) }}">
+            {% if profile and profile.profile_image %}
+                {% if profile.profile_image.startswith('http') %}
+                    <img src="{{ profile.profile_image }}" alt="me" class="nav-avatar">
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" class="nav-avatar">
+                {% endif %}
+            {% else %}
+                <div class="nav-avatar fallback">{{ user.username[0]|upper }}</div>
+            {% endif %}
+        </a>
+
+        <!-- Username -->
+        <span class="nav-username">{{ user.username }}</span>
+
+        <!-- Logout -->
+        <a class="nav-link logout-btn" href="{{ url_for('logout') }}">Logout</a>
+
+    {% else %}
+        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+        <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+    {% endif %}
+</div>
+
+
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Shared scripts -->
+  <script>
+  // image preview helper (used by create post & profile form)
+  function setupImagePreview(inputId, previewImgId, previewContainerId, clearBtnId) {
+    const input = document.getElementById(inputId);
+    const previewImg = document.getElementById(previewImgId);
+    const preview = document.getElementById(previewContainerId);
+    const clearBtn = document.getElementById(clearBtnId);
+    if (!input) return;
+    input.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) { preview.style.display='none'; return; }
+      previewImg.src = URL.createObjectURL(file);
+      preview.style.display = 'flex';
+    });
+    if (clearBtn) clearBtn.addEventListener('click', ()=>{ input.value=''; preview.style.display='none'; });
+  }
+
+  // Listen for like clicks and comment toggle (global)
+  document.addEventListener('click', function(e){
+    const likeBtn = e.target.closest('.like-btn');
+    if (likeBtn) {
+      const postId = likeBtn.dataset.postId;
+      fetch(`/post/${postId}/toggle_like`, { method: 'POST', headers: {'X-Requested-With':'XMLHttpRequest'} })
+        .then(r => r.json())
+        .then(data => {
+          if (!data) return;
+          const countEl = document.getElementById('likes-'+postId);
+          if (countEl && data.likes_count !== undefined) countEl.textContent = data.likes_count;
+          if (data.liked) likeBtn.classList.add('liked'); else likeBtn.classList.remove('liked');
+        }).catch(console.error);
+      return;
+    }
+
+    // comment toggle
+    const openBtn = e.target.closest('[data-open-comment]');
+    if (openBtn) {
+      const pid = openBtn.dataset.openComment;
+      const box = document.getElementById('comment-box-'+pid);
+      if (box) box.style.display = (box.style.display === 'none' ? 'flex' : 'none');
+      e.preventDefault();
+      return;
+    }
+  });
+  </script>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

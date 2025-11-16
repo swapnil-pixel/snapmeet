@@ -98,35 +98,53 @@ def init_db():
 
 # Global context for navbar
 @app.context_processor
-def inject_navbar_data():
+def inject_globals():
+    # default empty context
     if 'user_id' not in session:
         return {}
 
+    user_id = session['user_id']
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cur = conn.cursor(dictionary=True)
+
+    # Get user
+    cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
+    user = cur.fetchone()
+
+    # Get profile (if exists)
+    cur.execute("SELECT * FROM profiles WHERE user_id=%s", (user_id,))
+    profile = cur.fetchone()
 
     # Friend Requests
-    cursor.execute('''
+    cur.execute("""
         SELECT friend_requests.id, users.username
         FROM friend_requests
         JOIN users ON friend_requests.sender_id = users.id
         WHERE friend_requests.receiver_id = %s AND friend_requests.status = 'pending'
-    ''', (session['user_id'],))
-    friend_requests = cursor.fetchall()
+    """, (user_id,))
+    friend_requests = cur.fetchall()
 
     # Suggested Users
-    cursor.execute('''
+    cur.execute("""
         SELECT id, username FROM users
         WHERE id != %s AND id NOT IN (
             SELECT sender_id FROM friend_requests WHERE receiver_id = %s
             UNION
             SELECT receiver_id FROM friend_requests WHERE sender_id = %s
         )
-    ''', (session['user_id'], session['user_id'], session['user_id']))
-    suggested_users = cursor.fetchall()
+    """, (user_id, user_id, user_id))
+    suggested_users = cur.fetchall()
 
+    cur.close()
     conn.close()
-    return dict(friend_requests=friend_requests, suggested_users=suggested_users)
+
+    return dict(
+        user=user,
+        profile=profile,
+        friend_requests=friend_requests,
+        suggested_users=suggested_users
+    )
+
 
 # Home
 @app.route('/')
@@ -433,7 +451,7 @@ def view_friend_requests():
     requests = cursor.fetchall()
     conn.close()
 
-    return render_template('friend_requests.html', friend_requests=requests)
+    return render_template('friend_requests.html', requests=requests)
 
 # Suggested Users Page
 @app.route('/suggested_users')
@@ -528,16 +546,37 @@ def send_request(receiver_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
+    user_id = session['user_id']
+
+    # ❌ Prevent sending request to yourself
+    if user_id == receiver_id:
+        return redirect(url_for('dashboard'))
+
     conn = get_connection()
     cursor = conn.cursor()
+
+    # ❌ Prevent duplicate requests
+    cursor.execute('''
+        SELECT id FROM friend_requests
+        WHERE (sender_id=%s AND receiver_id=%s)
+           OR (sender_id=%s AND receiver_id=%s)
+    ''', (user_id, receiver_id, receiver_id, user_id))
+
+    if cursor.fetchone():
+        conn.close()
+        return redirect(url_for('dashboard'))
+
+    # ✔ Insert new friend request
     cursor.execute('''
         INSERT INTO friend_requests (sender_id, receiver_id)
         VALUES (%s, %s)
-    ''', (session['user_id'], receiver_id))
+    ''', (user_id, receiver_id))
+
     conn.commit()
     conn.close()
 
     return redirect(url_for('dashboard'))
+
 
 # Accept friend request
 @app.route('/accept_request/<int:request_id>', methods=['POST'])

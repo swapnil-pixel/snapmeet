@@ -1,77 +1,37 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
 
 {% block content %}
-<div class="main-content" style="padding: 20px;">
-    <h2>Search Results for "{{ query }}"</h2>
+<div class="insta-container">
 
-    {% if results %}
-        <div class="user-grid">
-            {% for user in results %}
-                {% if user.id != session.get('user_id') %}
-                <div class="user-card">
-                    <div class="avatar">{{ user.username[0]|upper }}</div>
-                    <div class="username">{{ user.username }}</div>
-                    <form method="POST" action="{{ url_for('send_request', receiver_id=user.id) }}">
-                        <button type="submit" class="add-btn">Send Request</button>
-                    </form>
-                </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% else %}
-        <p>No users found.</p>
-    {% endif %}
+  <h2 class="search-title">Search results for "{{ query }}"</h2>
+
+  {% if not results %}
+      <p class="muted center" style="margin-top:20px;">No users found 🙁</p>
+  {% endif %}
+
+  {% for user in results %}
+  <div class="search-card">
+      
+      <!-- avatar -->
+      <div class="search-avatar">
+          {{ user.username[0]|upper }}
+      </div>
+
+      <!-- name -->
+      <div class="search-info">
+          <a href="{{ url_for('view_profile_page', user_id=user.id) }}" class="search-user-link">
+              {{ user.username }}
+          </a>
+      </div>
+
+      <!-- add friend button -->
+      <form method="POST" action="{{ url_for('send_request', receiver_id=user.id) }}">
+          <button class="btn small primary search-add-btn">Add</button>
+      </form>
+
+  </div>
+  {% endfor %}
+
 </div>
-
-<style>
-.user-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-}
-
-.user-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.user-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-}
-.avatar {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 10px auto;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3B82F6, #6D28D9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-}
-.username {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
-}
-.add-btn {
-    background: #3B82F6;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-.add-btn:hover {
-    background: #2563EB;
-}
-</style>
 {% endblock %}

@@ -1,176 +1,64 @@
 {% extends "base.html" %}
+{% block title %}Profile — {{ user.username }}{% endblock %}
+
 {% block content %}
-<div class="profile-page" style="padding:28px;">
-
-  <!-- Header: cover + avatar -->
-  <div class="profile-header card" style="padding:18px; margin-bottom:18px; position:relative;">
-    <!-- optional cover (use a gradient as fallback) -->
-    <div style="height:120px; border-radius:10px; background:linear-gradient(90deg,#eef2ff,#fff);"></div>
-
-    <!-- avatar and basic info -->
-    <div style="display:flex; gap:20px; align-items:flex-end; margin-top:-64px;">
-      <div style="width:160px; height:160px; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(2,6,23,0.06); background:#fff;">
-        {% if profile and profile.profile_image %}
-          {% if profile.profile_image.startswith('http') %}
-            <img src="{{ profile.profile_image }}" alt="{{ user.username }}" style="width:100%; height:100%; object-fit:cover;">
-          {% else %}
-            <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" alt="{{ user.username }}" style="width:100%; height:100%; object-fit:cover;">
-          {% endif %}
+<div class="insta-container">
+  <div class="profile-header-card">
+    <div class="ph-avatar">
+      {% if profile and profile.profile_image %}
+        {% if profile.profile_image.startswith('http') %}
+          <img src="{{ profile.profile_image }}" class="ph-avatar">
         {% else %}
-          <div style="width:100%; height:100%; display:grid; place-items:center; font-size:48px; font-weight:800; background:linear-gradient(135deg,#3B82F6,#6D28D9); color:white;">
-              {{ user.username[0]|upper }}
-          </div>
+          <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" class="ph-avatar">
         {% endif %}
-      </div>
+      {% else %}
+        <div class="ph-avatar fallback">{{ user.username[0]|upper }}</div>
+      {% endif %}
+    </div>
 
-      <div style="flex:1;">
-        <div style="display:flex; align-items:center; gap:14px;">
-          <h1 style="margin:0; font-size:26px;">{{ user.username }}</h1>
-
-          {% if 'user_id' in session and session['user_id'] == user.id %}
-            <a href="{{ url_for('create_or_edit_profile') }}" class="btn small" style="margin-left:8px;">Edit Profile</a>
-          {% endif %}
-        </div>
-
-        {% if profile and profile.headline %}
-          <div class="muted" style="margin-top:6px;">{{ profile.headline }}</div>
+    <div class="ph-info">
+      <h3>{{ user.username }}</h3>
+      <div class="muted">{{ profile.headline if profile and profile.headline else "" }}</div>
+      <div style="margin-top:8px;">
+        {% if session.get('user_id') == user.id %}
+          <a class="edit-profile-btn" href="{{ url_for('create_or_edit_profile') }}">Edit profile</a>
         {% endif %}
-
-        <div style="margin-top:12px; color:#111827; font-weight:600;">
-          {% if profile and profile.location %}<span style="margin-right:18px;"><strong>Location:</strong> {{ profile.location }}</span>{% endif %}
-          {% if profile and profile.college %}<span><strong>College:</strong> {{ profile.college }}{% if profile.graduation_year %} ({{ profile.graduation_year }}){% endif %}</span>{% endif %}
-        </div>
-
-        <div style="margin-top:8px;">
-          {% if profile and profile.website %}
-            <a class="small-link" href="{{ profile.website }}" target="_blank">{{ profile.website }}</a>
-          {% endif %}
-          {% if profile and profile.resume_filename %}
-            <a class="small-link" href="{% if profile.resume_filename.startswith('http') %}{{ profile.resume_filename }}{% else %}{{ url_for('static', filename='uploads/profiles/' ~ profile.resume_filename) }}{% endif %}" target="_blank" style="margin-left:12px;">Download resume</a>
-          {% endif %}
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- Main grid: left (meta) + right (bio/posts) -->
-  <div style="display:grid; grid-template-columns: 320px 1fr; gap:18px; align-items:start;">
+  <div class="create-post-card" style="padding:14px;">
+    <h4>About</h4>
+    {% if profile and profile.bio %}
+      <p style="white-space:pre-wrap;">{{ profile.bio }}</p>
+    {% else %}
+      <p class="muted">No bio yet.</p>
+    {% endif %}
+    <div style="margin-top:10px;">
+      {% if profile and profile.location %}<div><strong>Location:</strong> {{ profile.location }}</div>{% endif %}
+      {% if profile and profile.college %}<div><strong>College:</strong> {{ profile.college }}</div>{% endif %}
+      {% if profile and profile.website %}<div><a href="{{ profile.website }}" class="muted" target="_blank">{{ profile.website }}</a></div>{% endif %}
+    </div>
+  </div>
 
-    <!-- LEFT: meta cards -->
-    <div>
-      <!-- Profile info card -->
-      <div class="card" style="padding:16px; margin-bottom:14px;">
-        <h4 style="margin:0 0 8px 0;">About</h4>
-        {% if profile and profile.bio %}
-          <p style="white-space:pre-wrap; color:#111827;">{{ profile.bio }}</p>
-        {% else %}
-          <p class="muted">No bio provided yet.</p>
-        {% endif %}
-      </div>
-
-      <!-- Skills -->
-      <div class="card" style="padding:16px; margin-bottom:14px;">
-        <h4 style="margin:0 0 8px 0;">Skills</h4>
-        {% if profile and profile.skills %}
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            {% for skill in profile.skills.split(',') %}
-              {% set s = skill.strip() %}
-              {% if s %}
-                <span style="background:#f1f5f9; padding:6px 10px; border-radius:999px; font-weight:600;">{{ s }}</span>
-              {% endif %}
-            {% endfor %}
+  <div class="feed-container">
+    <h4 class="muted" style="margin:8px 0;">Posts</h4>
+    {% if posts %}
+      {% for p in posts %}
+        <div class="post-card">
+          <div class="post-header">
+            <div class="post-avatar fallback">{{ p.username[0]|upper }}</div>
+            <div style="flex:1;"><div class="post-author">{{ p.username }}</div><small class="post-time muted">{{ p.created_at }}</small></div>
           </div>
-        {% else %}
-          <p class="muted">No skills listed.</p>
-        {% endif %}
-      </div>
-
-      <!-- Contacts / quick actions -->
-      <div class="card" style="padding:16px;">
-        <h4 style="margin:0 0 8px 0;">Actions</h4>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          {% if 'user_id' in session and session['user_id'] == user.id %}
-            <a class="btn" href="{{ url_for('create_or_edit_profile') }}">Edit Profile</a>
-          {% else %}
-            <a class="btn" href="{{ url_for('send_request', receiver_id=user.id) }}">Send Friend Request</a>
+          <div class="post-text">{{ p.content }}</div>
+          {% if p.image_filename %}
+            <img class="post-img" src="{{ p.image_filename }}">
           {% endif %}
-          <a class="small-link" href="{{ url_for('view_suggested_users') }}">See suggestions</a>
         </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: posts -->
-    <div>
-      <div class="card" style="padding:16px; margin-bottom:14px;">
-        <h3 style="margin:0 0 8px 0;">Activity & Posts</h3>
-        {% if posts %}
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            {% for p in posts %}
-              <article style="padding:12px; border-radius:8px; background:#fff; box-shadow:0 1px 2px rgba(6,8,15,0.03);">
-                <div style="display:flex; gap:12px; align-items:flex-start;">
-                  <div style="width:48px; height:48px; border-radius:50%; overflow:hidden;">
-                    {# author avatar: prefer author_image then profile then initial #}
-                    {% if p.author_image %}
-                      {% if p.author_image.startswith('http') %}
-                        <img src="{{ p.author_image }}" style="width:48px;height:48px;object-fit:cover;">
-                      {% else %}
-                        <img src="{{ url_for('static', filename='uploads/profiles/' ~ p.author_image) }}" style="width:48px;height:48px;object-fit:cover;">
-                      {% endif %}
-                    {% elif profile and profile.profile_image %}
-                      {% if profile.profile_image.startswith('http') %}
-                        <img src="{{ profile.profile_image }}" style="width:48px;height:48px;object-fit:cover;">
-                      {% else %}
-                        <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" style="width:48px;height:48px;object-fit:cover;">
-                      {% endif %}
-                    {% else %}
-                      <div style="width:48px;height:48px;display:grid;place-items:center;background:#eef2ff;color:#0b5cff;font-weight:700;">
-                        {{ user.username[0]|upper }}
-                      </div>
-                    {% endif %}
-                  </div>
-
-                  <div style="flex:1;">
-                    <div style="display:flex; justify-content:space-between; gap:12px;">
-                      <div>
-                        <div style="font-weight:700;">{{ p.username }}</div>
-                        <div class="muted" style="font-size:13px;">{{ p.created_at }}</div>
-                      </div>
-
-                      {% if 'user_id' in session and session['user_id'] != p.user_id %}
-                        <div>
-                          <a class="btn small" href="{{ url_for('chat', friend_id=p.user_id) }}">Message</a>
-                        </div>
-                      {% endif %}
-                    </div>
-
-                    <div style="margin-top:8px; white-space:pre-wrap;">{{ p.content }}</div>
-
-                    {% if p.image_filename %}
-                      <div style="margin-top:10px;">
-                        {% if p.image_filename.startswith('http') %}
-                          <img src="{{ p.image_filename }}" style="max-width:100%; border-radius:8px;">
-                        {% else %}
-                          <img src="{{ url_for('static', filename='uploads/' ~ p.image_filename) }}" style="max-width:100%; border-radius:8px;">
-                        {% endif %}
-                      </div>
-                    {% endif %}
-
-                    <!-- actions -->
-                    <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
-                      <button class="btn small" style="border:1px solid #e6e9ef; background:transparent;">Like</button>
-                      <a class="small-link" href="#comment-form">Comment</a>
-                      <a class="small-link" href="{{ url_for('view_profile_page', user_id=p.user_id) }}">View profile</a>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="muted">No posts yet.</p>
-        {% endif %}
-      </div>
-    </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted">No posts yet.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

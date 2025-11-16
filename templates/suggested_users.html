@@ -1,33 +1,30 @@
-<!-- templates/suggested_users.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Suggested Users</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <div class="navbar">
-        <a href="{{ url_for('dashboard') }}" class="back-btn">← Back</a>
-        <h2>✨ People You May Know</h2>
-    </div>
+{% extends "base.html" %}
+{% block title %}Suggested Users{% endblock %}
 
-    <div class="content animated-section">
-        {% if suggested_users %}
-            {% for u in suggested_users %}
-                <div class="card user-card">
-                    <p>👤 <strong>{{ u.username }}</strong></p>
-                    <form method="POST" action="/send_request/{{ u.id }}">
-                        <button type="submit" class="send-btn">➕ Send Request</button>
-                    </form>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-suggestions">
-                <h3>😎 You've connected with everyone!</h3>
-                <p>Check back later for more suggestions.</p>
-                <img src="{{ url_for('static', filename='fun/no-suggestions.png') }}" alt="No suggestions" class="fun-img">
+{% block content %}
+<div class="insta-container">
+  <div class="create-post-card">
+    <h3>Suggested Users</h3>
+    {% if suggested_users %}
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+        {% for u in suggested_users %}
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f97316;color:#fff;">{{ u.username[0]|upper }}</div>
+              <div>{{ u.username }}</div>
             </div>
-        {% endif %}
-    </div>
-</body>
-</html>
+            <div style="display:flex; gap:8px;">
+              <form method="POST" action="{{ url_for('send_request', receiver_id=u.id) }}">
+                <button class="btn primary" type="submit">Add</button>
+              </form>
+              <a class="small-link" href="{{ url_for('view_profile_page', user_id=u.id) }}">Profile</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted">No suggestions at the moment.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

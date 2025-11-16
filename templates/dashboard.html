@@ -1,266 +1,135 @@
 {% extends "base.html" %}
+{% block title %}Home — SnapMeet{% endblock %}
+
 {% block content %}
-<div class="page-wrapper">
-  <div class="page-container">
+<div class="insta-container">
 
-    <!-- LEFT column -->
-    <aside class="col left-col">
-      <div class="card profile-card">
-  <div class="avatar-large">
-        {% if profile and profile.profile_image %}
-        {% if profile.profile_image.startswith('http') %}
-            <img src="{{ profile.profile_image }}" alt="profile" style="width:120px; height:120px; object-fit:cover; border-radius:12px; display:block; margin:0 auto;">
-        {% else %}
-            <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" alt="profile" style="width:120px; height:120px; object-fit:cover; border-radius:12px; display:block; margin:0 auto;">
-        {% endif %}
-        {% else %}
-        <div style="width:120px; height:120px; display:grid; place-items:center; font-size:36px; font-weight:700; border-radius:12px; margin:0 auto; background:linear-gradient(135deg,#3B82F6,#6D28D9); color:#fff;">
+
+  <!-- CREATE POST -->
+  <div class="create-post-card">
+    <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data">
+      <div class="cp-top">
+        <div class="cp-avatar">
+          {% if profile and profile.profile_image %}
+            {% if profile.profile_image.startswith('http') %}
+              <img src="{{ profile.profile_image }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+            {% endif %}
+          {% else %}
             {{ user.username[0]|upper }}
+          {% endif %}
         </div>
-        {% endif %}
-    </div>
 
-    <h3 class="name">{{ user.username }}</h3>
-    <p class="email">{{ user.email }}</p>
-    <a class="small-link" href="{{ url_for('create_or_edit_profile') }}" style="display:block; margin-top:6px;">Edit Profile</a>
-
-        <hr>
-        <h4 class="muted">Your Friends</h4>
-
-        {% if friends %}
-          <ul class="friends-list">
-            {% for f in friends %}
-            <li>
-              <div class="friend-left">
-                <div class="friend-avatar">{{ f.username[0]|upper }}</div>
-                <a class="friend-name" href="{{ url_for('view_profile_page', user_id=f.id) }}">{{ f.username }}</a>
-              </div>
-              <div class="friend-actions">
-                <a href="{{ url_for('chat', friend_id=f.id) }}" class="btn small primary">Chat</a>
-              </div>
-            </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="muted">No friends yet.</p>
-        {% endif %}
+        <textarea name="content" placeholder="Share something..." required></textarea>
       </div>
 
-      <div class="card suggestions-card" style="margin-top:18px;">
-        <h4>Suggestions</h4>
-        {% for s in suggested_users[:4] %}
-        <div class="suggest-row">
-          <div class="suggest-avatar">{{ s.username[0]|upper }}</div>
-          <div style="flex:1;">
-            <div class="sname" style="font-weight:700;">{{ s.username }}</div>
-            <div style="display:flex; gap:8px; margin-top:6px;">
-              <form method="POST" action="{{ url_for('send_request', receiver_id=s.id) }}" style="margin:0;">
-                <button class="btn small">Add</button>
-              </form>
-              <a class="small-link" href="{{ url_for('view_profile_page', user_id=s.id) }}">Profile</a>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-        <a class="small-link" href="{{ url_for('view_suggested_users') }}" style="display:block; margin-top:8px;">See all suggestions</a>
-      </div>
-    </aside>
+      <div class="cp-actions">
+        <label class="upload-label">
+          <input id="image-input" name="image" type="file" accept="image/*" style="display:none;">
+          📷 Add photo
+        </label>
+        <button class="post-btn" type="submit">Post</button>
 
-    <!-- CENTER column -->
-    <main class="col center-col">
-      <div class="hero">
-        <h1>Welcome to Job 🎉</h1>
-        <p class="muted">Connect with nearby students — snaps, requests & chats.</p>
       </div>
 
-      <!-- Composer -->
-      <div class="card composer">
-        <form action="{{ url_for('create_post') }}" method="POST" enctype="multipart/form-data">
-            <div class="composer-top">
-            <div class="avatar-mini">
-                {% if profile and profile.profile_image %}
-                {% if profile.profile_image.startswith('http') %}
-                    <img src="{{ profile.profile_image }}" alt="me" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">
-                {% else %}
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ profile.profile_image) }}" alt="me" style="width:40px; height:40px; object-fit:cover; border-radius:50%;">
-                {% endif %}
-                {% else %}
-                {{ user.username[0]|upper }}
-                {% endif %}
-            </div>
-            <textarea name="content" placeholder="What's on your mind?" rows="3" required></textarea>
-            </div>
-
-
-          <div class="composer-actions">
-            <label class="file-label">
-              <input id="image-input" type="file" name="image" accept="image/*" />
-              <span>Upload image</span>
-            </label>
-
-            <div class="right-actions">
-              <button type="submit" class="btn primary">Post</button>
-            </div>
-          </div>
-
-          <div id="preview" class="image-preview" style="display:none;">
-            <img id="preview-img" src="" alt="preview">
-            <button id="clear-preview" type="button" class="btn small ghost">Remove</button>
-          </div>
-        </form>
+      <div id="preview" class="image-preview" style="display:none;">
+        <img id="preview-img" src="" alt="preview" style="height:90px; border-radius:8px;">
+        <button id="clear-preview" type="button" class="btn small">Remove</button>
       </div>
+    </form>
+  </div>
 
-      <!-- Feed -->
-      <section class="feed">
-        <h3 class="section-title">Recent Posts</h3>
+  <!-- FEED -->
+  <div class="feed-container">
+    {% if not posts %}
+      <p class="muted center">No posts yet — say hello 👋</p>
+    {% endif %}
 
-        {% if not posts %}
-          <p class="muted">No posts yet. Be the first to post!</p>
-        {% endif %}
+    {% for post in posts %}
+      {% set author = post.username if post.username is defined and post.username else 'Unknown' %}
+      <div class="post-card">
 
-        {% for post in posts %}
-        {# safe author and avatar handling #}
-        {% set author = post.username if post.username is defined and post.username else 'Unknown' %}
-        <article class="card post-card">
-          <div class="post-header">
-            <div class="avatar-mini">
-                {% if post.author_image %}
-                    {% if post.author_image.startswith('http') %}
-                    <img src="{{ post.author_image }}" alt="{{ author }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    {% else %}
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ post.author_image) }}" alt="{{ author }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    {% endif %}
-                {% else %}
-                    {{ author[0]|upper }}
-                {% endif %}
-                </div>
-
-            <div style="flex:1;">
-              <div class="post-author">{{ author }}</div>
-              <div class="post-time muted">{{ post.created_at }}</div>
-            </div>
-
-            {% if post.user_id != user.id %}
-            <div style="display:flex; gap:8px; align-items:center;">
-              <a href="{{ url_for('chat', friend_id=post.user_id) }}" class="btn small primary">Message</a>
-            </div>
+        <!-- Post Header -->
+        <div class="post-header">
+          <div class="post-avatar">
+            {% if post.author_image %}
+              {% if post.author_image.startswith('http') %}
+                <img src="{{ post.author_image }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='uploads/profiles/' ~ post.author_image) }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+              {% endif %}
+            {% else %}
+              <div class="post-avatar fallback">{{ author[0]|upper }}</div>
             {% endif %}
           </div>
 
-          <div class="post-body">
-                <p>{{ post.content }}</p>
-                {% if post.image_filename %}
-                <img class="post-image" src="{{ post.image_filename }}" alt="post image">
-                {% endif %}
-            </div>
-
-
-          <div class="post-actions" style="margin-top:12px; align-items:center;">
-            <!-- Like button (AJAX) -->
-            <button class="icon like-btn" data-post-id="{{ post.id }}" aria-pressed="false" style="display:flex; gap:8px; align-items:center;">
-              <span class="like-icon">♡</span>
-              <span class="likes-count" id="likes-{{ post.id }}">{{ post.likes_count if post.likes_count is defined else 0 }}</span>
-            </button>
-
-            <a class="small-link" href="#" data-open-comment="{{ post.id }}" style="margin-left:8px;">Comment</a>
-            <a class="small-link" href="{{ url_for('view_profile_page', user_id=post.user_id) }}" style="margin-left:8px;">View profile</a>
+          <div style="flex:1;">
+            <div class="post-author">{{ author }}</div>
+            <small class="post-time muted">{{ post.created_at }}</small>
           </div>
 
-          <!-- comment form (hidden, toggle) -->
-          <div class="comment-form" id="comment-form-{{ post.id }}" style="display:none; margin-top:12px;">
-            <form action="{{ url_for('post_comment', post_id=post.id) }}" method="POST">
-              <input type="text" name="comment" placeholder="Write a comment..." style="width:78%; padding:8px; border-radius:8px; border:1px solid #e6e9ef;">
-              <button class="btn small primary" type="submit">Reply</button>
-            </form>
-          </div>
-        </article>
-        {% endfor %}
-      </section>
-    </main>
+          {% if post.user_id != user.id %}
+            <a class="nav-link" href="{{ url_for('chat', friend_id=post.user_id) }}">Message</a>
+          {% endif %}
+        </div>
 
-    <!-- RIGHT column -->
-    <aside class="col right-col">
-      <div class="card requests-card">
-        <h4>Friend Requests</h4>
-        {% if friend_requests %}
-          {% for req in friend_requests %}
-          <div class="request-row">
-            <div class="request-name">{{ req.username }}</div>
-            <div class="request-actions">
-              <form method="POST" action="{{ url_for('accept_request', request_id=req.id) }}" class="inline-form">
-                <button class="btn small primary">Accept</button>
-              </form>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <p class="muted">No new requests</p>
+        <!-- Post Text -->
+        <div class="post-text">{{ post.content }}</div>
+
+        <!-- Post Image -->
+        {% if post.image_filename %}
+          <img class="post-img" src="{{ post.image_filename }}" alt="post image">
         {% endif %}
-        <a class="small-link" href="{{ url_for('view_friend_requests') }}">Manage requests</a>
-      </div>
 
-      <div class="card info-card" style="margin-top:16px;">
-        <h4>LinkedIn-like Tips</h4>
-        <ul class="muted" style="margin-top:8px;">
-          <li>Use meaningful posts — others can find you by search</li>
-          <li>Vanish chat deletes messages permanently</li>
-        </ul>
-      </div>
-    </aside>
+        <!-- Post Actions -->
+        <div class="post-actions">
+          <button class="icon like-btn" data-post-id="{{ post.id }}" aria-pressed="false">
+            <span class="like-icon">♡</span>
+            <span id="likes-{{ post.id }}">{{ post.likes_count if post.likes_count is defined else 0 }}</span>
+          </button>
 
+          <a class="comment-link" href="#" data-open-comment="{{ post.id }}">Comment</a>
+          <a class="comment-link" href="{{ url_for('view_profile_page', user_id=post.user_id) }}">Profile</a>
+        </div>
+
+        <!-- Comment Box -->
+        <div class="comment-box" id="comment-box-{{ post.id }}" style="display:none;">
+          <form action="{{ url_for('post_comment', post_id=post.id) }}" method="POST" style="display:flex; gap:8px; width:100%;">
+            <input name="comment" placeholder="Write a comment..." style="flex:1; padding:8px; border-radius:8px;">
+            <button class="btn small" type="submit">Reply</button>
+          </form>
+        </div>
+
+      </div>
+    {% endfor %}
   </div>
+
 </div>
 
-<!-- client-side JS: image preview, like toggle (AJAX), comment toggle -->
+{% block extra_js %}
 <script>
-/* Image preview */
-document.getElementById('image-input')?.addEventListener('change', function(ev){
-  const file = ev.target.files[0];
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  const preview = document.getElementById('preview');
-  const img = document.getElementById('preview-img');
-  img.src = url;
-  preview.style.display = 'flex';
-});
-document.getElementById('clear-preview')?.addEventListener('click', function(){
-  const inp = document.getElementById('image-input');
-  inp.value = '';
-  const preview = document.getElementById('preview');
-  preview.style.display = 'none';
-});
+  // img preview
+  setupImagePreview('image-input','preview-img','preview','clear-preview');
 
-/* Like (AJAX toggle) and comment toggle */
-document.addEventListener('click', function(e){
-  // Like button
-  const likeBtn = e.target.closest('.like-btn');
-  if(likeBtn){
-    const postId = likeBtn.dataset.postId;
-    fetch(`/post/${postId}/toggle_like`, {
-      method: 'POST',
-      headers: {'X-Requested-With':'XMLHttpRequest'}
-    })
-    .then(r => r.json())
-    .then(data => {
-      if(data && data.likes_count !== undefined){
-        const countEl = document.getElementById('likes-'+postId);
-        if(countEl) countEl.textContent = data.likes_count;
-        // apply 'liked' class if liked true
-        if(data.liked) likeBtn.classList.add('liked');
-        else likeBtn.classList.remove('liked');
-        likeBtn.setAttribute('aria-pressed', data.liked ? 'true' : 'false');
-      }
-    }).catch(err => console.error(err));
-    return;
-  }
+  // Likes + comment toggle
+  document.addEventListener('click', function(e){
+    const likeBtn = e.target.closest('.like-btn');
+    if(likeBtn){
+      const postId = likeBtn.dataset.postId;
+      fetch(`/post/${postId}/toggle_like`, { method:'POST' })
+      .then(res => res.json()).then(data => {
+        document.getElementById('likes-'+postId).textContent = data.likes_count;
+        likeBtn.classList.toggle('liked', data.liked);
+      });
+    }
 
-  // toggle comment box
-  if(e.target && e.target.dataset && e.target.dataset.openComment){
-    const pid = e.target.dataset.openComment;
-    const el = document.getElementById('comment-form-'+pid);
-    if(el) el.style.display = (el.style.display === 'none' ? 'block' : 'none');
-    e.preventDefault();
-  }
-});
+    if(e.target.dataset.openComment){
+      let id = e.target.dataset.openComment;
+      let box = document.getElementById(`comment-box-${id}`);
+      box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+    }
+  });
 </script>
+{% endblock %}
 {% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="insta-container">
+  <div class="create-post-card">
+    <h3>Notifications</h3>
+    {% if notifications %}
+      <ul style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+        {% for n in notifications %}
+          <li style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>{{ n.actor_name }}</strong> — <span class="muted">{{ n.text }}</span>
+              <div class="muted" style="font-size:13px;">{{ n.created_at }}</div>
+            </div>
+            <form method="POST" action="{{ url_for('mark_notif_read', nid=n.id) }}">
+              <button class="btn small">Mark read</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No notifications.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
